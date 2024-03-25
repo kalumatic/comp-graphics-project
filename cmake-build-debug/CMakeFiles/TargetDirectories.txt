@@ -1,0 +1,10 @@
+/home/kalu/projects/comp-graphics-project/project/comp-graphics-project/cmake-build-debug/CMakeFiles/STB_IMAGE.dir
+/home/kalu/projects/comp-graphics-project/project/comp-graphics-project/cmake-build-debug/CMakeFiles/comp-graphics-project.dir
+/home/kalu/projects/comp-graphics-project/project/comp-graphics-project/cmake-build-debug/CMakeFiles/edit_cache.dir
+/home/kalu/projects/comp-graphics-project/project/comp-graphics-project/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/home/kalu/projects/comp-graphics-project/project/comp-graphics-project/cmake-build-debug/libs/glad/CMakeFiles/glad.dir
+/home/kalu/projects/comp-graphics-project/project/comp-graphics-project/cmake-build-debug/libs/glad/CMakeFiles/edit_cache.dir
+/home/kalu/projects/comp-graphics-project/project/comp-graphics-project/cmake-build-debug/libs/glad/CMakeFiles/rebuild_cache.dir
+/home/kalu/projects/comp-graphics-project/project/comp-graphics-project/cmake-build-debug/libs/imgui/CMakeFiles/imgui.dir
+/home/kalu/projects/comp-graphics-project/project/comp-graphics-project/cmake-build-debug/libs/imgui/CMakeFiles/edit_cache.dir
+/home/kalu/projects/comp-graphics-project/project/comp-graphics-project/cmake-build-debug/libs/imgui/CMakeFiles/rebuild_cache.dir
