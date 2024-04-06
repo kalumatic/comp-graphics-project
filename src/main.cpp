@@ -96,20 +96,22 @@ int main() {
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
     // position attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *) 0);
     glEnableVertexAttribArray(0);
     // color attribute
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *) (3 * sizeof(float)));
     glEnableVertexAttribArray(1);
     // texture coord attribute
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *) (6 * sizeof(float)));
     glEnableVertexAttribArray(2);
 
     unsigned int terrainTexture;
     glGenTextures(1, &terrainTexture);
-    glBindTexture(GL_TEXTURE_2D, terrainTexture); // all upcoming GL_TEXTURE_2D operations now have effect on this texture object
+    glBindTexture(GL_TEXTURE_2D,
+                  terrainTexture); // all upcoming GL_TEXTURE_2D operations now have effect on this texture object
     // set the texture wrapping parameters
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// set texture wrapping to GL_REPEAT (default wrapping method)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
+                    GL_REPEAT);    // set texture wrapping to GL_REPEAT (default wrapping method)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     // set texture filtering parameters
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -117,14 +119,12 @@ int main() {
     // load image, create texture and generate mipmaps
     int width, height, nrChannels;
     // The FileSystem::getPath(...) is part of the GitHub repository so we can find files on any IDE/platform; replace it with your own image path.
-    unsigned char *data = stbi_load(FileSystem::getPath("resources/textures/grass.jpg").c_str(), &width, &height, &nrChannels, 0);
-    if (data)
-    {
+    unsigned char *data = stbi_load(FileSystem::getPath("resources/textures/grass.jpg").c_str(), &width, &height,
+                                    &nrChannels, 0);
+    if (data) {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
-    }
-    else
-    {
+    } else {
         std::cout << "Failed to load texture" << std::endl;
     }
     stbi_image_free(data);
@@ -165,10 +165,11 @@ int main() {
         terrainShader.setMat4("view", view);
 
         glm::mat4 model = glm::mat4(1.0f);
-        model = glm::rotate(model,  glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
         model = glm::translate(model,
                                glm::vec3(0.0f, 0.0f, -5.0f)); // translate it down so it's at the center of the scene
-        model = glm::scale(model, glm::vec3(100.0f, 100.0f, 1.0f));    // it's a bit too big for our scene, so scale it down
+        model = glm::scale(model,
+                           glm::vec3(100.0f, 100.0f, 1.0f));    // it's a bit too big for our scene, so scale it down
         terrainShader.setMat4("model", model);
 
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
@@ -176,9 +177,21 @@ int main() {
         // baseball
         baseballShader.use();
 
+        baseballShader.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
+        baseballShader.setVec3("viewPos", camera.Position);
+
+        // light properties
+        baseballShader.setVec3("dirLight.ambient", 0.2f, 0.2f, 0.2f);
+        baseballShader.setVec3("dirLight.diffuse", 0.5f, 0.5f, 0.5f);
+        baseballShader.setVec3("dirLight.specular", 1.0f, 1.0f, 1.0f);
+
+        // material properties
+        baseballShader.setFloat("material.shininess", 32.0f);
+
+
         // view/projection transformations
-         projection = glm::perspective(glm::radians(camera.Zoom), (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f,
-                                                100.0f);
+        projection = glm::perspective(glm::radians(camera.Zoom), (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f,
+                                      100.0f);
         view = camera.GetViewMatrix();
         baseballShader.setMat4("projection", projection);
         baseballShader.setMat4("view", view);
@@ -190,7 +203,6 @@ int main() {
         model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));    // it's a bit too big for our scene, so scale it down
         baseballShader.setMat4("model", model);
         baseballModel.Draw(baseballShader);
-
 
 
         glfwSwapBuffers(window);
