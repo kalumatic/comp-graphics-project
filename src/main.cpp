@@ -189,12 +189,17 @@ int main() {
     // skybox
     vector<std::string> faces
             {
-                    "resources/textures/skybox/right.jpg",
-                    "resources/textures/skybox/left.jpg",
-                    "resources/textures/skybox/top.jpg",
-                    "resources/textures/skybox/bottom.jpg",
-                    "resources/textures/skybox/front.jpg",
-                    "resources/textures/skybox/back.jpg"
+                    "resources/textures/field-skyboxes/Footballfield2/posx.jpg",
+                    "resources/textures/field-skyboxes/Footballfield2/negx.jpg",
+                    "resources/textures/field-skyboxes/Footballfield2/posy.jpg",
+                    "resources/textures/field-skyboxes/Footballfield2/negy.jpg",
+                    "resources/textures/field-skyboxes/Footballfield2/posz.jpg",
+                    "resources/textures/field-skyboxes/Footballfield2/negz.jpg",
+//                    "resources/textures/skybox/left.jpg",
+//                    "resources/textures/skybox/top.jpg",
+//                    "resources/textures/skybox/bottom.jpg",
+//                    "resources/textures/skybox/front.jpg",
+//                    "resources/textures/skybox/back.jpg"
             };
     unsigned int cubemapTexture = loadCubemap(faces);
 
@@ -228,31 +233,15 @@ int main() {
         glClearColor(0.0f, 0.2f, 0.5f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // skybox
-        glDepthMask(GL_FALSE);
-        skyboxShader.use();
-
-        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f,
-                                                100.0f);
-        glm::mat4 view = glm::mat4(glm::mat3(camera.GetViewMatrix()));
-        skyboxShader.setMat4("projection", projection);
-        skyboxShader.setMat4("view", view);
-
-        glBindVertexArray(skyboxVAO);
-        glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
-        glDepthMask(GL_TRUE);
-
-
 
         // terrain
         terrainShader.use();
         glBindTexture(GL_TEXTURE_2D, terrainTexture);
         glBindVertexArray(VAO);
 
-        projection = glm::perspective(glm::radians(camera.Zoom), (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f,
+        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f,
                                       100.0f);
-        view = camera.GetViewMatrix();
+        glm::mat4 view = camera.GetViewMatrix();
         terrainShader.setMat4("projection", projection);
         terrainShader.setMat4("view", view);
 
@@ -295,6 +284,22 @@ int main() {
         model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));    // it's a bit too big for our scene, so scale it down
         baseballShader.setMat4("model", model);
         baseballModel.Draw(baseballShader);
+
+        // skybox
+        glDepthFunc(GL_LEQUAL);
+        skyboxShader.use();
+
+        projection = glm::perspective(glm::radians(camera.Zoom), (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f,
+                                                100.0f);
+        view = glm::mat4(glm::mat3(camera.GetViewMatrix()));
+        skyboxShader.setMat4("projection", projection);
+        skyboxShader.setMat4("view", view);
+
+        glBindVertexArray(skyboxVAO);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+        glDepthMask(GL_TRUE);
+
 
 
         glfwSwapBuffers(window);
