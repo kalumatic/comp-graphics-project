@@ -1,5 +1,5 @@
 // TODO
-// blending, face culling, advanced lighting, shadows, football model
+// blending, face culling, advanced lighting, shadows, moving football
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -248,7 +248,7 @@ int main() {
         glBindVertexArray(VAO);
 
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f,
-                                      100.0f);
+                                                100.0f);
         glm::mat4 view = camera.GetViewMatrix();
         terrainShader.setMat4("projection", projection);
         terrainShader.setMat4("view", view);
@@ -258,7 +258,7 @@ int main() {
         model = glm::translate(model,
                                glm::vec3(0.0f, 0.0f, -5.0f)); // translate it down so it's at the center of the scene
         model = glm::scale(model,
-                           glm::vec3(30.0f, 30.0f, 1.0f));
+                           glm::vec3(20.0f, 20.0f, 1.0f));
         terrainShader.setMat4("model", model);
 
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
@@ -297,6 +297,21 @@ int main() {
 //        glBindTexture(GL_TEXTURE_2D, 0);
         footballShader.use();
 
+        // view/projection transformations
+        projection = glm::perspective(glm::radians(camera.Zoom), (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f,
+                                      100.0f);
+        view = camera.GetViewMatrix();
+        footballShader.setMat4("projection", projection);
+        footballShader.setMat4("view", view);
+
+        model = glm::mat4(1.0f);
+        model = glm::translate(model,
+                               glm::vec3(0.0f, -3.9f, glm::sin(glfwGetTime()) *
+                                                      15.0f)); // translate it down so it's at the center of the scene
+        model = glm::scale(model, glm::vec3(10.0f));
+        model = glm::rotate(model, (float) glm::sin(glfwGetTime()) * 15.0f, glm::vec3(1.0f, 0.0f, 0.0f));
+        footballShader.setMat4("model", model);
+
         footballShader.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
         footballShader.setVec3("viewPos", camera.Position);
 
@@ -308,19 +323,6 @@ int main() {
         // material properties
         footballShader.setFloat("material.shininess", 32.0f);
 
-
-        // view/projection transformations
-        projection = glm::perspective(glm::radians(camera.Zoom), (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f,
-                                      100.0f);
-        view = camera.GetViewMatrix();
-        footballShader.setMat4("projection", projection);
-        footballShader.setMat4("view", view);
-
-        model = glm::mat4(1.0f);
-        model = glm::translate(model,
-                               glm::vec3(0.0f, -3.9f, 0.0f)); // translate it down so it's at the center of the scene
-        model = glm::scale(model, glm::vec3(10.0f));
-        footballShader.setMat4("model", model);
         footballModel.Draw(footballShader);
 
         // skybox
@@ -328,7 +330,7 @@ int main() {
         skyboxShader.use();
 
         projection = glm::perspective(glm::radians(camera.Zoom), (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f,
-                                                100.0f);
+                                      100.0f);
         view = glm::mat4(glm::mat3(camera.GetViewMatrix()));
         skyboxShader.setMat4("projection", projection);
         skyboxShader.setMat4("view", view);
@@ -337,7 +339,6 @@ int main() {
         glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
         glDrawArrays(GL_TRIANGLES, 0, 36);
         glDepthMask(GL_TRUE);
-
 
 
         glfwSwapBuffers(window);
