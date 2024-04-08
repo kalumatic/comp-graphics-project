@@ -1,5 +1,5 @@
 // TODO
-// blending, face culling, advanced lighting, shadows, football
+// blending, face culling, advanced lighting, shadows, football model
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -215,7 +215,8 @@ int main() {
     Shader terrainShader("resources/shaders/terrain.vs", "resources/shaders/terrain.fs");
     terrainShader.setInt("texture1", terrainTexture);
 
-    Shader baseballShader("resources/shaders/backpack.vs", "resources/shaders/backpack.fs");
+//    Shader baseballShader("resources/shaders/backpack.vs", "resources/shaders/backpack.fs");
+    Shader footballShader("resources/shaders/football.vs", "resources/shaders/football.fs");
 
     Shader skyboxShader("resources/shaders/skybox.vs", "resources/shaders/skybox.fs");
     skyboxShader.use();
@@ -223,7 +224,10 @@ int main() {
 
     // load models
     // -----------
-    Model baseballModel(FileSystem::getPath("resources/objects/backpack/backpack.obj"));
+//    Model baseballModel(FileSystem::getPath("resources/objects/backpack/backpack.obj"));
+    Model footballModel(FileSystem::getPath("resources/objects/apple/apple.obj"));
+
+    footballModel.SetShaderTextureNamePrefix("material.");
 
     while (!glfwWindowShouldClose(window)) {
         // per-frame time logic
@@ -260,34 +264,64 @@ int main() {
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
         // baseball
-        baseballShader.use();
+//        baseballShader.use();
+//
+//        baseballShader.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
+//        baseballShader.setVec3("viewPos", camera.Position);
+//
+//        // light properties
+//        baseballShader.setVec3("dirLight.ambient", 0.2f, 0.2f, 0.2f);
+//        baseballShader.setVec3("dirLight.diffuse", 0.5f, 0.5f, 0.5f);
+//        baseballShader.setVec3("dirLight.specular", 1.0f, 1.0f, 1.0f);
+//
+//        // material properties
+//        baseballShader.setFloat("material.shininess", 32.0f);
+//
+//
+//        // view/projection transformations
+//        projection = glm::perspective(glm::radians(camera.Zoom), (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f,
+//                                      100.0f);
+//        view = camera.GetViewMatrix();
+//        baseballShader.setMat4("projection", projection);
+//        baseballShader.setMat4("view", view);
+//
+//        // render the loaded model
+//        model = glm::mat4(1.0f);
+//        model = glm::translate(model,
+//                               glm::vec3(0.0f, 0.0f, -5.0f)); // translate it down so it's at the center of the scene
+//        model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));    // it's a bit too big for our scene, so scale it down
+//        baseballShader.setMat4("model", model);
+//        baseballModel.Draw(baseballShader);
 
-        baseballShader.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
-        baseballShader.setVec3("viewPos", camera.Position);
+        // football
+//        glBindTexture(GL_TEXTURE_2D, 0);
+        footballShader.use();
+
+        footballShader.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
+        footballShader.setVec3("viewPos", camera.Position);
 
         // light properties
-        baseballShader.setVec3("dirLight.ambient", 0.2f, 0.2f, 0.2f);
-        baseballShader.setVec3("dirLight.diffuse", 0.5f, 0.5f, 0.5f);
-        baseballShader.setVec3("dirLight.specular", 1.0f, 1.0f, 1.0f);
+        footballShader.setVec3("dirLight.ambient", 0.2f, 0.2f, 0.2f);
+        footballShader.setVec3("dirLight.diffuse", 0.5f, 0.5f, 0.5f);
+        footballShader.setVec3("dirLight.specular", 1.0f, 1.0f, 1.0f);
 
         // material properties
-        baseballShader.setFloat("material.shininess", 32.0f);
+        footballShader.setFloat("material.shininess", 32.0f);
 
 
         // view/projection transformations
         projection = glm::perspective(glm::radians(camera.Zoom), (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f,
                                       100.0f);
         view = camera.GetViewMatrix();
-        baseballShader.setMat4("projection", projection);
-        baseballShader.setMat4("view", view);
+        footballShader.setMat4("projection", projection);
+        footballShader.setMat4("view", view);
 
-        // render the loaded model
         model = glm::mat4(1.0f);
         model = glm::translate(model,
                                glm::vec3(0.0f, 0.0f, -5.0f)); // translate it down so it's at the center of the scene
         model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));    // it's a bit too big for our scene, so scale it down
-        baseballShader.setMat4("model", model);
-        baseballModel.Draw(baseballShader);
+        footballShader.setMat4("model", model);
+        footballModel.Draw(footballShader);
 
         // skybox
         glDepthFunc(GL_LEQUAL);
