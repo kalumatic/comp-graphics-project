@@ -225,7 +225,7 @@ int main() {
     // load models
     // -----------
 //    Model baseballModel(FileSystem::getPath("resources/objects/backpack/backpack.obj"));
-    Model footballModel(FileSystem::getPath("resources/objects/apple/apple.obj"));
+    Model footballModel(FileSystem::getPath("resources/objects/uploads_files_824560_Cafusa_obj/Cafusa_Base_Mesh.obj"));
 
     footballModel.SetShaderTextureNamePrefix("material.");
 
@@ -318,8 +318,8 @@ int main() {
 
         model = glm::mat4(1.0f);
         model = glm::translate(model,
-                               glm::vec3(0.0f, 0.0f, -5.0f)); // translate it down so it's at the center of the scene
-        model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));    // it's a bit too big for our scene, so scale it down
+                               glm::vec3(0.0f, -3.9f, 0.0f)); // translate it down so it's at the center of the scene
+        model = glm::scale(model, glm::vec3(10.0f));
         footballShader.setMat4("model", model);
         footballModel.Draw(footballShader);
 
