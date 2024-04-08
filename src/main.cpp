@@ -1,5 +1,5 @@
 // TODO
-// blending, face culling, advanced lighting, shadows, moving football
+// blending, advanced lighting, shadows
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -21,6 +21,8 @@ void
 scroll_callback(__attribute__((unused)) GLFWwindow *window, __attribute__((unused)) double xOffset, double yOffset);
 
 unsigned int loadCubemap(vector<std::string> faces);
+
+unsigned int loadTexture(char const *path);
 
 // settings
 const unsigned int SCR_WIDTH = 1200;
@@ -74,11 +76,11 @@ int main() {
     // FLAT TERRAIN
 
     float vertices[] = {
-            // positions          // colors           // texture coords
-            0.5f, 0.8f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, // top right
-            0.5f, -0.8f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, // bottom right
+            // positions                // normals                      // texture coords
+            0.5f, 0.8f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, // top right
+            0.5f, -0.8f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, // bottom right
             -0.5f, -0.8f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, // bottom left
-            -0.5f, 0.8f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f  // top left
+            -0.5f, 0.8f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f  // top left
 
     };
 
@@ -166,28 +168,28 @@ int main() {
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *) 0);
 
-    unsigned int terrainTexture;
-    glGenTextures(1, &terrainTexture);
-    glBindTexture(GL_TEXTURE_2D,
-                  terrainTexture); // all upcoming GL_TEXTURE_2D operations now have effect on this texture object
-    // set the texture wrapping parameters
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
-                    GL_REPEAT);    // set texture wrapping to GL_REPEAT (default wrapping method)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    // set texture filtering parameters
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    // load image, create texture and generate mipmaps
-    int width, height, nrChannels;
-    // The FileSystem::getPath(...) is part of the GitHub repository so we can find files on any IDE/platform; replace it with your own image path.
-    unsigned char *data = stbi_load(FileSystem::getPath("resources/textures/field.jpeg").c_str(), &width, &height,
-                                    &nrChannels, 0);
-    if (data) {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
-    } else {
-        std::cout << "Failed to load texture" << std::endl;
-    }
+//    unsigned int terrainTexture;
+//    glGenTextures(1, &terrainTexture);
+//    glBindTexture(GL_TEXTURE_2D,
+//                  terrainTexture); // all upcoming GL_TEXTURE_2D operations now have effect on this texture object
+//    // set the texture wrapping parameters
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
+//                    GL_REPEAT);    // set texture wrapping to GL_REPEAT (default wrapping method)
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+//    // set texture filtering parameters
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+//    // load image, create texture and generate mipmaps
+//    int width, height, nrChannels;
+//    // The FileSystem::getPath(...) is part of the GitHub repository so we can find files on any IDE/platform; replace it with your own image path.
+//    unsigned char *data = stbi_load(FileSystem::getPath("resources/textures/field.jpeg").c_str(), &width, &height,
+//                                    &nrChannels, 0);
+//    if (data) {
+//        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+//        glGenerateMipmap(GL_TEXTURE_2D);
+//    } else {
+//        std::cout << "Failed to load texture" << std::endl;
+//    }
 
     // skybox
     vector<std::string> faces
@@ -207,13 +209,19 @@ int main() {
             };
     unsigned int cubemapTexture = loadCubemap(faces);
 
-    stbi_image_free(data);
+//    stbi_image_free(data);
 
 
     // build and compile shaders
     // -------------------------
     Shader terrainShader("resources/shaders/terrain.vs", "resources/shaders/terrain.fs");
-    terrainShader.setInt("texture1", terrainTexture);
+
+    unsigned int diffuseMap = loadTexture(FileSystem::getPath("resources/textures/field.jpeg").c_str());
+    unsigned int specularMap = loadTexture(FileSystem::getPath("resources/textures/black.jpg").c_str());
+    terrainShader.setInt("material.diffuse", 0);
+    terrainShader.setInt("material.specular", 1);
+
+    terrainShader.setFloat("material.shininess", 1.0f);
 
 //    Shader baseballShader("resources/shaders/backpack.vs", "resources/shaders/backpack.fs");
     Shader footballShader("resources/shaders/football.vs", "resources/shaders/football.fs");
@@ -244,7 +252,7 @@ int main() {
 
         // terrain
         terrainShader.use();
-        glBindTexture(GL_TEXTURE_2D, terrainTexture);
+//        glBindTexture(GL_TEXTURE_2D, terrainTexture);
         glBindVertexArray(VAO);
 
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f,
@@ -260,6 +268,24 @@ int main() {
         model = glm::scale(model,
                            glm::vec3(20.0f, 20.0f, 1.0f));
         terrainShader.setMat4("model", model);
+
+        terrainShader.setVec3("dirLight.direction", -1.0f, -1.0f, 0.0f);
+        terrainShader.setVec3("viewPos", camera.Position);
+
+        // light properties
+        terrainShader.setVec3("dirLight.ambient", 0.2f, 0.2f, 0.2f);
+        terrainShader.setVec3("dirLight.diffuse", 0.6f, 0.6f, 0.6f);
+        terrainShader.setVec3("dirLight.specular", 0.0f, 0.0f, 0.0f);
+
+        // material properties
+        terrainShader.setFloat("material.shininess", 1.0f);
+
+        // bind diffuse map
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, diffuseMap);
+        // bind specular map
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, specularMap);
 
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
@@ -295,6 +321,9 @@ int main() {
 
         // football
 //        glBindTexture(GL_TEXTURE_2D, 0);
+        // face culling
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_BACK); // default
         footballShader.use();
 
         // view/projection transformations
@@ -312,18 +341,19 @@ int main() {
         model = glm::rotate(model, (float) glm::sin(glfwGetTime()) * 15.0f, glm::vec3(1.0f, 0.0f, 0.0f));
         footballShader.setMat4("model", model);
 
-        footballShader.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
+        footballShader.setVec3("dirLight.direction", -1.0f, -1.0f, 0.0f);
         footballShader.setVec3("viewPos", camera.Position);
 
         // light properties
         footballShader.setVec3("dirLight.ambient", 0.2f, 0.2f, 0.2f);
-        footballShader.setVec3("dirLight.diffuse", 0.5f, 0.5f, 0.5f);
+        footballShader.setVec3("dirLight.diffuse", 0.6f, 0.6f, 0.6f);
         footballShader.setVec3("dirLight.specular", 1.0f, 1.0f, 1.0f);
 
         // material properties
         footballShader.setFloat("material.shininess", 32.0f);
 
         footballModel.Draw(footballShader);
+        glDisable(GL_CULL_FACE);
 
         // skybox
         glDepthFunc(GL_LEQUAL);
@@ -414,6 +444,39 @@ unsigned int loadCubemap(vector<std::string> faces) {
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+    return textureID;
+}
+
+unsigned int loadTexture(char const *path) {
+    unsigned int textureID;
+    glGenTextures(1, &textureID);
+
+    int width, height, nrComponents;
+    unsigned char *data = stbi_load(path, &width, &height, &nrComponents, 0);
+    if (data) {
+        GLenum format;
+        if (nrComponents == 1)
+            format = GL_RED;
+        else if (nrComponents == 3)
+            format = GL_RGB;
+        else if (nrComponents == 4)
+            format = GL_RGBA;
+
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        stbi_image_free(data);
+    } else {
+        std::cout << "Texture failed to load at path: " << path << std::endl;
+        stbi_image_free(data);
+    }
 
     return textureID;
 }
