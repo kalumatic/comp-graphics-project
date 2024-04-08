@@ -1,3 +1,6 @@
+// TODO
+// blending, face culling, advanced lighting, shadows, football
+
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
@@ -20,8 +23,8 @@ scroll_callback(__attribute__((unused)) GLFWwindow *window, __attribute__((unuse
 unsigned int loadCubemap(vector<std::string> faces);
 
 // settings
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
+const unsigned int SCR_WIDTH = 1200;
+const unsigned int SCR_HEIGHT = 800;
 
 // camera
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
@@ -72,10 +75,10 @@ int main() {
 
     float vertices[] = {
             // positions          // colors           // texture coords
-            0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, // top right
-            0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, // bottom right
-            -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, // bottom left
-            -0.5f, 0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f  // top left
+            0.5f, 0.8f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, // top right
+            0.5f, -0.8f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, // bottom right
+            -0.5f, -0.8f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, // bottom left
+            -0.5f, 0.8f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f  // top left
 
     };
 
@@ -177,7 +180,7 @@ int main() {
     // load image, create texture and generate mipmaps
     int width, height, nrChannels;
     // The FileSystem::getPath(...) is part of the GitHub repository so we can find files on any IDE/platform; replace it with your own image path.
-    unsigned char *data = stbi_load(FileSystem::getPath("resources/textures/grass.jpg").c_str(), &width, &height,
+    unsigned char *data = stbi_load(FileSystem::getPath("resources/textures/field.jpeg").c_str(), &width, &height,
                                     &nrChannels, 0);
     if (data) {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
@@ -194,7 +197,8 @@ int main() {
                     "resources/textures/field-skyboxes/Footballfield2/posy.jpg",
                     "resources/textures/field-skyboxes/Footballfield2/negy.jpg",
                     "resources/textures/field-skyboxes/Footballfield2/posz.jpg",
-                    "resources/textures/field-skyboxes/Footballfield2/negz.jpg",
+                    "resources/textures/field-skyboxes/Footballfield2/negz.jpg"
+//                    "resources/textures/skybox/right.jpg",
 //                    "resources/textures/skybox/left.jpg",
 //                    "resources/textures/skybox/top.jpg",
 //                    "resources/textures/skybox/bottom.jpg",
@@ -250,7 +254,7 @@ int main() {
         model = glm::translate(model,
                                glm::vec3(0.0f, 0.0f, -5.0f)); // translate it down so it's at the center of the scene
         model = glm::scale(model,
-                           glm::vec3(100.0f, 100.0f, 1.0f));    // it's a bit too big for our scene, so scale it down
+                           glm::vec3(30.0f, 30.0f, 1.0f));
         terrainShader.setMat4("model", model);
 
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
