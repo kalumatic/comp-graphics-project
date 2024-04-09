@@ -1,5 +1,5 @@
 // TODO
-// blending, advanced lighting, shadows
+// blending, shadows
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -278,7 +278,7 @@ int main() {
         terrainShader.setVec3("dirLight.specular", 0.0f, 0.0f, 0.0f);
 
         // material properties
-        terrainShader.setFloat("material.shininess", 1.0f);
+        terrainShader.setFloat("material.shininess", 64.0f);
 
         // bind diffuse map
         glActiveTexture(GL_TEXTURE0);
@@ -350,7 +350,7 @@ int main() {
         footballShader.setVec3("dirLight.specular", 1.0f, 1.0f, 1.0f);
 
         // material properties
-        footballShader.setFloat("material.shininess", 32.0f);
+        footballShader.setFloat("material.shininess", 128.0f);
 
         footballModel.Draw(footballShader);
         glDisable(GL_CULL_FACE);

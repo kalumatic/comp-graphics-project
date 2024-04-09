@@ -38,9 +38,13 @@ void main()
     vec3 diffuse = dirLight.diffuse * diff * texture(material.diffuse, TexCoords).rgb;
 
     // specular
+    // specular
     vec3 viewDir = normalize(viewPos - FragPos);
-    vec3 reflectDir = reflect(-lightDir, norm);
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
+//    vec3 reflectDir = reflect(-lightDir, norm);
+    // Blinn-Phong
+    vec3 halfwayDir = normalize(lightDir + viewDir);
+//    float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
+    float spec = pow(max(dot(viewDir, halfwayDir), 0.0), material.shininess);
     vec3 specular = dirLight.specular * spec * texture(material.specular, TexCoords).rgb;
 
     vec3 result = ambient + diffuse + specular;
