@@ -1,5 +1,5 @@
 // TODO
-// blending, shadows
+// blending - cloud fragment discarding, shadows
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -211,9 +211,52 @@ int main() {
 
 //    stbi_image_free(data);
 
+    // cloud transparent
+    float cloudVertices[] = {
+            // positions                // normals                      // texture coords
+            1.0f, 1.0f, 0.0f, 1.0f, 0.0f, // top right
+            1.0f, -1.0f, 0.0f, 0.0f, 0.0f, // bottom right
+            -1.0f, -1.0f, 0.0f, 0.0f, 1.0f, // bottom left
+            -1.0f, 1.0f, 0.0f, 1.0f, 1.0f  // top left
+    };
+    unsigned int cloudIndices[] = {  // note that we start from 0!
+            0, 1, 3,   // first triangle
+            1, 2, 3    // second triangle
+    };
+
+    unsigned int cloudVAO, cloudVBO;
+    unsigned int cloudEBO;
+    glGenVertexArrays(1, &cloudVAO);
+    glGenBuffers(1, &cloudVBO);
+    glGenBuffers(1, &cloudEBO);
+    glBindVertexArray(cloudVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, cloudVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(cloudVertices), cloudVertices, GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cloudEBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cloudIndices), cloudIndices, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *) 0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *) (3 * sizeof(float)));
+    glBindVertexArray(0);
+
+    unsigned int cloudTexture = loadTexture(FileSystem::getPath("resources/textures/cloud.png").c_str());
+
+    vector<glm::vec3> clouds
+            {
+                    glm::vec3(-6.5f, 5.0f, -0.48f),
+                    glm::vec3(2.5f, 5.0f, 1.51f),
+                    glm::vec3(10.0f, 5.0f, 4.7f),
+                    glm::vec3(-15.3f, 5.0f, -5.3f),
+                    glm::vec3(1.5f, 5.0f, -8.6f)
+            };
 
     // build and compile shaders
     // -------------------------
+    Shader cloudShader("resources/shaders/cloud.vs", "resources/shaders/cloud.fs");
+    cloudShader.use();
+    cloudShader.setInt("texture1", 0);
+
     Shader terrainShader("resources/shaders/terrain.vs", "resources/shaders/terrain.fs");
 
     unsigned int diffuseMap = loadTexture(FileSystem::getPath("resources/textures/field.jpeg").c_str());
@@ -288,6 +331,24 @@ int main() {
         glBindTexture(GL_TEXTURE_2D, specularMap);
 
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+        // cloud
+        cloudShader.use();
+        glBindVertexArray(cloudVAO);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, cloudTexture);
+        cloudShader.setMat4("view", view);
+        cloudShader.setMat4("projection", projection);
+
+        for (unsigned int i = 0; i < clouds.size(); i++) {
+            model = glm::mat4(1.0f);
+            model = glm::translate(model, clouds[i]);
+            model = glm::scale(model, glm::vec3(5.0f, 2.0f, 0.0f));
+            cloudShader.setMat4("model", model);
+//        glDrawArrays(GL_TRIANGLES, 0, 6);
+            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        }
+
 
         // baseball
 //        baseballShader.use();
@@ -462,6 +523,7 @@ unsigned int loadTexture(char const *path) {
             format = GL_RGB;
         else if (nrComponents == 4)
             format = GL_RGBA;
+
 
         glBindTexture(GL_TEXTURE_2D, textureID);
         glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
