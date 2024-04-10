@@ -1,5 +1,5 @@
 // TODO
-// fix specular in field shader
+// pointlight for the football, position of the light
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -292,7 +292,7 @@ int main() {
         fieldShader.setVec3("dirLight.diffuse", dirLightDiffuse.x, dirLightDiffuse.y, dirLightDiffuse.z);
         fieldShader.setVec3("dirLight.specular", dirLightSpecular.x, dirLightSpecular.y, dirLightSpecular.z);
 
-        fieldShader.setVec3("pointLight.position", 10.0f, -5.0f, 0.0f);
+        fieldShader.setVec3("pointLight.position", 10.0f, 5.0f, 0.0f);
         fieldShader.setVec3("pointLight.ambient", 0.3f, 0.3f, 0.3f);
         fieldShader.setVec3("pointLight.diffuse", 0.95f, 0.95f, 0.95f);
         fieldShader.setVec3("pointLight.specular", 1.0f, 1.0f, 1.0f);
@@ -372,6 +372,14 @@ int main() {
         footballShader.setVec3("dirLight.ambient", dirLightAmbient.x, dirLightAmbient.y, dirLightAmbient.z);
         footballShader.setVec3("dirLight.diffuse", dirLightDiffuse.x, dirLightDiffuse.y, dirLightDiffuse.z);
         footballShader.setVec3("dirLight.specular", dirLightSpecular.x, dirLightSpecular.y, dirLightSpecular.z);
+
+        fieldShader.setVec3("pointLight.position", 10.0f, 5.0f, 0.0f);
+        fieldShader.setVec3("pointLight.ambient", 0.3f, 0.3f, 0.3f);
+        fieldShader.setVec3("pointLight.diffuse", 0.95f, 0.95f, 0.95f);
+        fieldShader.setVec3("pointLight.specular", 1.0f, 1.0f, 1.0f);
+        fieldShader.setFloat("pointLight.constant", 1.0f);
+        fieldShader.setFloat("pointLight.linear", 0.027f);
+        fieldShader.setFloat("pointLight.quadratic", 0.0028f);
 
         footballShader.setVec3("viewPos", camera.Position);
 
