@@ -1,5 +1,5 @@
 // TODO
-// blending - cloud fragment discarding, shadows
+// fix specular in field shader
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -25,8 +25,8 @@ unsigned int loadCubemap(vector<std::string> faces);
 unsigned int loadTexture(char const *path);
 
 // settings
-const unsigned int SCR_WIDTH = 1200;
-const unsigned int SCR_HEIGHT = 800;
+const unsigned int SCR_WIDTH = 1800;
+const unsigned int SCR_HEIGHT = 1100;
 
 // camera
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
@@ -35,11 +35,12 @@ float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
 
 // timing
-float deltaTime = 0.0f;    // time between current frame and last frame
+float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
 
 int main() {
+    // window init
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -60,6 +61,7 @@ int main() {
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
 
+    // cursor settings
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress)) {
@@ -71,11 +73,13 @@ int main() {
 
     glEnable(GL_DEPTH_TEST);
 
+    // wireframe mode
 //    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-    // FLAT TERRAIN
+    // -----------------------------------------------------------------------------------------------------------
 
-    float vertices[] = {
+    // football field
+    float fieldVertices[] = {
             // positions                // normals                      // texture coords
             0.5f, 0.8f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, // top right
             0.5f, -0.8f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, // bottom right
@@ -84,10 +88,35 @@ int main() {
 
     };
 
-    unsigned int indices[] = {
+    unsigned int fieldIndices[] = {
             0, 1, 3, // first triangle
             1, 2, 3  // second triangle
     };
+
+    unsigned int fieldVBO, fieldVAO, fieldEBO;
+    glGenVertexArrays(1, &fieldVAO);
+    glGenBuffers(1, &fieldVBO);
+    glGenBuffers(1, &fieldEBO);
+    glBindVertexArray(fieldVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, fieldVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(fieldVertices), fieldVertices, GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, fieldEBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(fieldIndices), fieldIndices, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *) 0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *) (3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *) (6 * sizeof(float)));
+    glEnableVertexAttribArray(2);
+    glBindVertexArray(0);
+
+    Shader fieldShader("resources/shaders/field.vs", "resources/shaders/field.fs");
+
+    unsigned int fieldDiffuseMap = loadTexture(FileSystem::getPath("resources/textures/field.jpeg").c_str());
+//  TODO  unsigned int fieldSpecularMap = loadTexture(FileSystem::getPath("resources/textures/black.jpg").c_str());
+    fieldShader.setInt("material.diffuse", 0);
+    fieldShader.setInt("material.specular", 1);
+    fieldShader.setFloat("material.shininess", 1.0f);
 
     // skybox
     float skyboxVertices[] = {
@@ -135,30 +164,6 @@ int main() {
             1.0f, -1.0f, 1.0f
     };
 
-    unsigned int VBO, VAO, EBO;
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-    glGenBuffers(1, &EBO);
-
-    glBindVertexArray(VAO);
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-    // position attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *) 0);
-    glEnableVertexAttribArray(0);
-    // color attribute
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *) (3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-    // texture coord attribute
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *) (6 * sizeof(float)));
-    glEnableVertexAttribArray(2);
-
-    // skybox
     unsigned int skyboxVAO, skyboxVBO;
     glGenVertexArrays(1, &skyboxVAO);
     glGenBuffers(1, &skyboxVBO);
@@ -167,65 +172,48 @@ int main() {
     glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *) 0);
+    glBindVertexArray(0);
 
-//    unsigned int terrainTexture;
-//    glGenTextures(1, &terrainTexture);
-//    glBindTexture(GL_TEXTURE_2D,
-//                  terrainTexture); // all upcoming GL_TEXTURE_2D operations now have effect on this texture object
-//    // set the texture wrapping parameters
-//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
-//                    GL_REPEAT);    // set texture wrapping to GL_REPEAT (default wrapping method)
-//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-//    // set texture filtering parameters
-//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-//    // load image, create texture and generate mipmaps
-//    int width, height, nrChannels;
-//    // The FileSystem::getPath(...) is part of the GitHub repository so we can find files on any IDE/platform; replace it with your own image path.
-//    unsigned char *data = stbi_load(FileSystem::getPath("resources/textures/field.jpeg").c_str(), &width, &height,
-//                                    &nrChannels, 0);
-//    if (data) {
-//        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-//        glGenerateMipmap(GL_TEXTURE_2D);
-//    } else {
-//        std::cout << "Failed to load texture" << std::endl;
-//    }
-
-    // skybox
-    vector<std::string> faces
+    vector<std::string> skyboxFaces
             {
-                    "resources/textures/field-skyboxes/Footballfield2/posx.jpg",
-                    "resources/textures/field-skyboxes/Footballfield2/negx.jpg",
-                    "resources/textures/field-skyboxes/Footballfield2/posy.jpg",
-                    "resources/textures/field-skyboxes/Footballfield2/negy.jpg",
-                    "resources/textures/field-skyboxes/Footballfield2/posz.jpg",
-                    "resources/textures/field-skyboxes/Footballfield2/negz.jpg"
-//                    "resources/textures/skybox/right.jpg",
-//                    "resources/textures/skybox/left.jpg",
-//                    "resources/textures/skybox/top.jpg",
-//                    "resources/textures/skybox/bottom.jpg",
-//                    "resources/textures/skybox/front.jpg",
-//                    "resources/textures/skybox/back.jpg"
+                    "resources/textures/football-skybox/posx.jpg", // right
+                    "resources/textures/football-skybox/negx.jpg", // left
+                    "resources/textures/football-skybox/posy.jpg", // top
+                    "resources/textures/football-skybox/negy.jpg", // bottom
+                    "resources/textures/football-skybox/posz.jpg", // front
+                    "resources/textures/football-skybox/negz.jpg"  // back
             };
-    unsigned int cubemapTexture = loadCubemap(faces);
 
-//    stbi_image_free(data);
+    unsigned int cubemapTexture = loadCubemap(skyboxFaces);
 
-    // cloud transparent
+    Shader skyboxShader("resources/shaders/skybox.vs", "resources/shaders/skybox.fs");
+    skyboxShader.use();
+    skyboxShader.setInt("skybox", 0);
+
+    // clouds
     float cloudVertices[] = {
-            // positions                // normals                      // texture coords
+            // positions                  // texture coords
             1.0f, 1.0f, 0.0f, 1.0f, 0.0f, // top right
             1.0f, -1.0f, 0.0f, 0.0f, 0.0f, // bottom right
             -1.0f, -1.0f, 0.0f, 0.0f, 1.0f, // bottom left
             -1.0f, 1.0f, 0.0f, 1.0f, 1.0f  // top left
     };
-    unsigned int cloudIndices[] = {  // note that we start from 0!
+
+    unsigned int cloudIndices[] = {
             0, 1, 3,   // first triangle
             1, 2, 3    // second triangle
     };
 
-    unsigned int cloudVAO, cloudVBO;
-    unsigned int cloudEBO;
+    vector<glm::vec3> clouds // positions
+            {
+                    glm::vec3(-6.5f, 5.0f, -0.48f),
+                    glm::vec3(2.5f, 5.0f, 1.51f),
+                    glm::vec3(10.0f, 5.0f, 4.7f),
+                    glm::vec3(-15.3f, 5.0f, -5.3f),
+                    glm::vec3(1.5f, 5.0f, -8.6f)
+            };
+
+    unsigned int cloudVAO, cloudVBO, cloudEBO;
     glGenVertexArrays(1, &cloudVAO);
     glGenBuffers(1, &cloudVBO);
     glGenBuffers(1, &cloudEBO);
@@ -242,47 +230,20 @@ int main() {
 
     unsigned int cloudTexture = loadTexture(FileSystem::getPath("resources/textures/cloud.png").c_str());
 
-    vector<glm::vec3> clouds
-            {
-                    glm::vec3(-6.5f, 5.0f, -0.48f),
-                    glm::vec3(2.5f, 5.0f, 1.51f),
-                    glm::vec3(10.0f, 5.0f, 4.7f),
-                    glm::vec3(-15.3f, 5.0f, -5.3f),
-                    glm::vec3(1.5f, 5.0f, -8.6f)
-            };
-
-    // build and compile shaders
-    // -------------------------
     Shader cloudShader("resources/shaders/cloud.vs", "resources/shaders/cloud.fs");
     cloudShader.use();
     cloudShader.setInt("texture1", 0);
 
-    Shader terrainShader("resources/shaders/terrain.vs", "resources/shaders/terrain.fs");
 
-    unsigned int diffuseMap = loadTexture(FileSystem::getPath("resources/textures/field.jpeg").c_str());
-    unsigned int specularMap = loadTexture(FileSystem::getPath("resources/textures/black.jpg").c_str());
-    terrainShader.setInt("material.diffuse", 0);
-    terrainShader.setInt("material.specular", 1);
-
-    terrainShader.setFloat("material.shininess", 1.0f);
-
-//    Shader baseballShader("resources/shaders/backpack.vs", "resources/shaders/backpack.fs");
+    // football
     Shader footballShader("resources/shaders/football.vs", "resources/shaders/football.fs");
-
-    Shader skyboxShader("resources/shaders/skybox.vs", "resources/shaders/skybox.fs");
-    skyboxShader.use();
-    skyboxShader.setInt("skybox", 0);
-
-    // load models
-    // -----------
-//    Model baseballModel(FileSystem::getPath("resources/objects/backpack/backpack.obj"));
-    Model footballModel(FileSystem::getPath("resources/objects/uploads_files_824560_Cafusa_obj/Cafusa_Base_Mesh.obj"));
-
+    Model footballModel(FileSystem::getPath("resources/objects/football/football.obj"));
     footballModel.SetShaderTextureNamePrefix("material.");
 
+    // render loop
     while (!glfwWindowShouldClose(window)) {
+
         // per-frame time logic
-        // --------------------
         float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
@@ -292,107 +253,77 @@ int main() {
         glClearColor(0.0f, 0.2f, 0.5f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        // declaring matrices and vectors
+        glm::mat4 projection;
+        glm::mat4 view;
+        glm::mat4 model;
+        glm::vec3 dirLightDirection(-0.3f, -1.0f, 0.0f);
+        glm::vec3 dirLightAmbient(0.2f, 0.2f, 0.2f);
+        glm::vec3 dirLightDiffuse(0.5f, 0.5f, 0.5f);
+        glm::vec3 dirLightSpecular(1.0f, 1.0f, 1.0f);
 
-        // terrain
-        terrainShader.use();
-//        glBindTexture(GL_TEXTURE_2D, terrainTexture);
-        glBindVertexArray(VAO);
 
-        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f,
-                                                100.0f);
-        glm::mat4 view = camera.GetViewMatrix();
-        terrainShader.setMat4("projection", projection);
-        terrainShader.setMat4("view", view);
+        // projection and view matrix stay the same
+        projection = glm::perspective(glm::radians(camera.Zoom), (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f,
+                                      100.0f);
+        view = camera.GetViewMatrix();
 
-        glm::mat4 model = glm::mat4(1.0f);
+        // field
+        fieldShader.use();
+        glBindVertexArray(fieldVAO);
+
+        model = glm::mat4(1.0f);
         model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
         model = glm::translate(model,
-                               glm::vec3(0.0f, 0.0f, -5.0f)); // translate it down so it's at the center of the scene
+                               glm::vec3(0.0f, 0.0f, -5.0f));
         model = glm::scale(model,
                            glm::vec3(20.0f, 20.0f, 1.0f));
-        terrainShader.setMat4("model", model);
 
-        terrainShader.setVec3("dirLight.direction", -1.0f, -1.0f, 0.0f);
-        terrainShader.setVec3("viewPos", camera.Position);
+        fieldShader.setMat4("model", model);
+        fieldShader.setMat4("view", view);
+        fieldShader.setMat4("projection", projection);
 
-        // light properties
-        terrainShader.setVec3("dirLight.ambient", 0.2f, 0.2f, 0.2f);
-        terrainShader.setVec3("dirLight.diffuse", 0.6f, 0.6f, 0.6f);
-        terrainShader.setVec3("dirLight.specular", 0.0f, 0.0f, 0.0f);
 
-        // material properties
-        terrainShader.setFloat("material.shininess", 64.0f);
+        fieldShader.setVec3("dirLight.direction", dirLightDirection.x, dirLightDirection.y, dirLightDirection.z);
 
-        // bind diffuse map
+        fieldShader.setVec3("dirLight.ambient", dirLightAmbient.x, dirLightAmbient.y, dirLightAmbient.z);
+        fieldShader.setVec3("dirLight.diffuse", dirLightDiffuse.x, dirLightDiffuse.y, dirLightDiffuse.z);
+        fieldShader.setVec3("dirLight.specular", dirLightSpecular.x, dirLightSpecular.y, dirLightSpecular.z);
+
+        fieldShader.setVec3("viewPos", camera.Position);
+
+        fieldShader.setFloat("material.shininess", 0.0f);
+
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, diffuseMap);
-        // bind specular map
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, specularMap);
+        glBindTexture(GL_TEXTURE_2D, fieldDiffuseMap);
+        // TODO bind specular map
+//        glActiveTexture(GL_TEXTURE1);
+//        glBindTexture(GL_TEXTURE_2D, fieldSpecularMap);
 
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
-        // cloud
+        // clouds
         cloudShader.use();
         glBindVertexArray(cloudVAO);
+
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, cloudTexture);
+
         cloudShader.setMat4("view", view);
         cloudShader.setMat4("projection", projection);
-
         for (unsigned int i = 0; i < clouds.size(); i++) {
             model = glm::mat4(1.0f);
             model = glm::translate(model, clouds[i]);
             model = glm::scale(model, glm::vec3(5.0f, 2.0f, 0.0f));
             cloudShader.setMat4("model", model);
-//        glDrawArrays(GL_TRIANGLES, 0, 6);
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
         }
 
-
-        // baseball
-//        baseballShader.use();
-//
-//        baseballShader.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
-//        baseballShader.setVec3("viewPos", camera.Position);
-//
-//        // light properties
-//        baseballShader.setVec3("dirLight.ambient", 0.2f, 0.2f, 0.2f);
-//        baseballShader.setVec3("dirLight.diffuse", 0.5f, 0.5f, 0.5f);
-//        baseballShader.setVec3("dirLight.specular", 1.0f, 1.0f, 1.0f);
-//
-//        // material properties
-//        baseballShader.setFloat("material.shininess", 32.0f);
-//
-//
-//        // view/projection transformations
-//        projection = glm::perspective(glm::radians(camera.Zoom), (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f,
-//                                      100.0f);
-//        view = camera.GetViewMatrix();
-//        baseballShader.setMat4("projection", projection);
-//        baseballShader.setMat4("view", view);
-//
-//        // render the loaded model
-//        model = glm::mat4(1.0f);
-//        model = glm::translate(model,
-//                               glm::vec3(0.0f, 0.0f, -5.0f)); // translate it down so it's at the center of the scene
-//        model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));    // it's a bit too big for our scene, so scale it down
-//        baseballShader.setMat4("model", model);
-//        baseballModel.Draw(baseballShader);
-
         // football
-//        glBindTexture(GL_TEXTURE_2D, 0);
-        // face culling
-        glEnable(GL_CULL_FACE);
-        glCullFace(GL_BACK); // default
-        footballShader.use();
+        glEnable(GL_CULL_FACE); // face culling
+        glCullFace(GL_BACK); // default, but let's emphasize it
 
-        // view/projection transformations
-        projection = glm::perspective(glm::radians(camera.Zoom), (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f,
-                                      100.0f);
-        view = camera.GetViewMatrix();
-        footballShader.setMat4("projection", projection);
-        footballShader.setMat4("view", view);
+        footballShader.use();
 
         model = glm::mat4(1.0f);
         model = glm::translate(model,
@@ -401,37 +332,38 @@ int main() {
         model = glm::scale(model, glm::vec3(10.0f));
         model = glm::rotate(model, (float) glm::sin(glfwGetTime()) * 15.0f, glm::vec3(1.0f, 0.0f, 0.0f));
         footballShader.setMat4("model", model);
+        footballShader.setMat4("view", view);
+        footballShader.setMat4("projection", projection);
 
-        footballShader.setVec3("dirLight.direction", -1.0f, -1.0f, 0.0f);
+        footballShader.setVec3("dirLight.direction", dirLightDirection.x, dirLightDirection.y, dirLightDirection.z);
+
+        fieldShader.setVec3("dirLight.ambient", dirLightAmbient.x, dirLightAmbient.y, dirLightAmbient.z);
+        fieldShader.setVec3("dirLight.diffuse", dirLightDiffuse.x, dirLightDiffuse.y, dirLightDiffuse.z);
+        fieldShader.setVec3("dirLight.specular", dirLightSpecular.x, dirLightSpecular.y, dirLightSpecular.z);
+
         footballShader.setVec3("viewPos", camera.Position);
 
-        // light properties
-        footballShader.setVec3("dirLight.ambient", 0.2f, 0.2f, 0.2f);
-        footballShader.setVec3("dirLight.diffuse", 0.6f, 0.6f, 0.6f);
-        footballShader.setVec3("dirLight.specular", 1.0f, 1.0f, 1.0f);
-
-        // material properties
-        footballShader.setFloat("material.shininess", 128.0f);
+        footballShader.setFloat("material.shininess", 256.0f);
 
         footballModel.Draw(footballShader);
+
         glDisable(GL_CULL_FACE);
 
         // skybox
         glDepthFunc(GL_LEQUAL);
+
         skyboxShader.use();
 
-        projection = glm::perspective(glm::radians(camera.Zoom), (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f,
-                                      100.0f);
         view = glm::mat4(glm::mat3(camera.GetViewMatrix()));
-        skyboxShader.setMat4("projection", projection);
         skyboxShader.setMat4("view", view);
+        skyboxShader.setMat4("projection", projection);
 
         glBindVertexArray(skyboxVAO);
         glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
         glDrawArrays(GL_TRIANGLES, 0, 36);
         glDepthMask(GL_TRUE);
 
-
+        // swapping buffers
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
@@ -457,8 +389,6 @@ void processInput(GLFWwindow *window) {
         camera.ProcessKeyboard(RIGHT, deltaTime);
 }
 
-// glfw: whenever the mouse moves, this callback is called
-// -------------------------------------------------------
 void mouse_callback(__attribute__((unused)) GLFWwindow *window, double xPos, double yPos) {
     if (firstMouse) {
         lastX = xPos;
@@ -467,7 +397,7 @@ void mouse_callback(__attribute__((unused)) GLFWwindow *window, double xPos, dou
     }
 
     float xOffset = xPos - lastX;
-    float yOffset = lastY - yPos; // reversed since y-coordinates go from bottom to top
+    float yOffset = lastY - yPos;
 
     lastX = xPos;
     lastY = yPos;
@@ -475,8 +405,6 @@ void mouse_callback(__attribute__((unused)) GLFWwindow *window, double xPos, dou
     camera.ProcessMouseMovement(xOffset, yOffset);
 }
 
-// glfw: whenever the mouse scroll wheel scrolls, this callback is called
-// ----------------------------------------------------------------------
 void
 scroll_callback(__attribute__((unused)) GLFWwindow *window, __attribute__((unused)) double xOffset, double yOffset) {
     camera.ProcessMouseScroll(yOffset);
@@ -524,10 +452,10 @@ unsigned int loadTexture(char const *path) {
         else if (nrComponents == 4)
             format = GL_RGBA;
 
-
         glBindTexture(GL_TEXTURE_2D, textureID);
         glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
+
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);

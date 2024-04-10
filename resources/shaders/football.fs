@@ -9,12 +9,13 @@ struct DirLight {
     vec3 ambient;
 };
 
-    struct Material {
-        sampler2D texture_diffuse1;
-        sampler2D texture_specular1;
+struct Material {
+    sampler2D texture_diffuse1;
+    sampler2D texture_specular1;
 
-        float shininess;
-    };
+    float shininess;
+};
+
 in vec2 TexCoords;
 in vec3 Normal;
 in vec3 FragPos;
