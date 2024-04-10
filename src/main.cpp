@@ -113,9 +113,7 @@ int main() {
     Shader fieldShader("resources/shaders/field.vs", "resources/shaders/field.fs");
 
     unsigned int fieldDiffuseMap = loadTexture(FileSystem::getPath("resources/textures/field.jpeg").c_str());
-//  TODO  unsigned int fieldSpecularMap = loadTexture(FileSystem::getPath("resources/textures/black.jpg").c_str());
     fieldShader.setInt("material.diffuse", 0);
-    fieldShader.setInt("material.specular", 1);
     fieldShader.setFloat("material.shininess", 1.0f);
 
     // skybox
@@ -234,6 +232,10 @@ int main() {
     cloudShader.use();
     cloudShader.setInt("texture1", 0);
 
+    // lamp
+    Shader lampShader("resources/shaders/lamp.vs", "resources/shaders/lamp.fs");
+    Model lampModel(FileSystem::getPath("resources/objects/lamp/Lamp05b.obj"));
+    lampModel.SetShaderTextureNamePrefix("material.");
 
     // football
     Shader footballShader("resources/shaders/football.vs", "resources/shaders/football.fs");
@@ -258,8 +260,8 @@ int main() {
         glm::mat4 view;
         glm::mat4 model;
         glm::vec3 dirLightDirection(-0.3f, -1.0f, 0.0f);
-        glm::vec3 dirLightAmbient(0.2f, 0.2f, 0.2f);
-        glm::vec3 dirLightDiffuse(0.5f, 0.5f, 0.5f);
+        glm::vec3 dirLightAmbient(0.05f, 0.05f, 0.05f);
+        glm::vec3 dirLightDiffuse(0.2f, 0.2f, 0.2f);
         glm::vec3 dirLightSpecular(1.0f, 1.0f, 1.0f);
 
 
@@ -290,15 +292,20 @@ int main() {
         fieldShader.setVec3("dirLight.diffuse", dirLightDiffuse.x, dirLightDiffuse.y, dirLightDiffuse.z);
         fieldShader.setVec3("dirLight.specular", dirLightSpecular.x, dirLightSpecular.y, dirLightSpecular.z);
 
+        fieldShader.setVec3("pointLight.position", 10.0f, -5.0f, 0.0f);
+        fieldShader.setVec3("pointLight.ambient", 0.3f, 0.3f, 0.3f);
+        fieldShader.setVec3("pointLight.diffuse", 0.95f, 0.95f, 0.95f);
+        fieldShader.setVec3("pointLight.specular", 1.0f, 1.0f, 1.0f);
+        fieldShader.setFloat("pointLight.constant", 1.0f);
+        fieldShader.setFloat("pointLight.linear", 0.027f);
+        fieldShader.setFloat("pointLight.quadratic", 0.0028f);
+
         fieldShader.setVec3("viewPos", camera.Position);
 
         fieldShader.setFloat("material.shininess", 0.0f);
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, fieldDiffuseMap);
-        // TODO bind specular map
-//        glActiveTexture(GL_TEXTURE1);
-//        glBindTexture(GL_TEXTURE_2D, fieldSpecularMap);
 
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
@@ -319,10 +326,35 @@ int main() {
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
         }
 
-        // football
         glEnable(GL_CULL_FACE); // face culling
         glCullFace(GL_BACK); // default, but let's emphasize it
 
+        // lamp
+        lampShader.use();
+
+        model = glm::mat4(1.0f);
+        model = glm::translate(model,
+                               glm::vec3(10.0f, -5.0f, 0.0f)); // translate it down so it's at the center of the scene
+        model = glm::scale(model, glm::vec3(0.2f));
+        model = glm::rotate(model, 80.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+        lampShader.setMat4("model", model);
+        lampShader.setMat4("view", view);
+        lampShader.setMat4("projection", projection);
+
+        lampShader.setVec3("dirLight.direction", dirLightDirection.x, dirLightDirection.y, dirLightDirection.z);
+
+        lampShader.setVec3("dirLight.ambient", dirLightAmbient.x, dirLightAmbient.y, dirLightAmbient.z);
+        lampShader.setVec3("dirLight.diffuse", dirLightDiffuse.x, dirLightDiffuse.y, dirLightDiffuse.z);
+        lampShader.setVec3("dirLight.specular", dirLightSpecular.x, dirLightSpecular.y, dirLightSpecular.z);
+
+        lampShader.setVec3("viewPos", camera.Position);
+
+        lampShader.setFloat("material.shininess", 256.0f);
+
+        lampModel.Draw(lampShader);
+
+
+        // football
         footballShader.use();
 
         model = glm::mat4(1.0f);
@@ -337,9 +369,9 @@ int main() {
 
         footballShader.setVec3("dirLight.direction", dirLightDirection.x, dirLightDirection.y, dirLightDirection.z);
 
-        fieldShader.setVec3("dirLight.ambient", dirLightAmbient.x, dirLightAmbient.y, dirLightAmbient.z);
-        fieldShader.setVec3("dirLight.diffuse", dirLightDiffuse.x, dirLightDiffuse.y, dirLightDiffuse.z);
-        fieldShader.setVec3("dirLight.specular", dirLightSpecular.x, dirLightSpecular.y, dirLightSpecular.z);
+        footballShader.setVec3("dirLight.ambient", dirLightAmbient.x, dirLightAmbient.y, dirLightAmbient.z);
+        footballShader.setVec3("dirLight.diffuse", dirLightDiffuse.x, dirLightDiffuse.y, dirLightDiffuse.z);
+        footballShader.setVec3("dirLight.specular", dirLightSpecular.x, dirLightSpecular.y, dirLightSpecular.z);
 
         footballShader.setVec3("viewPos", camera.Position);
 
