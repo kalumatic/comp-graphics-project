@@ -4,9 +4,9 @@ out vec4 FragColor;
 struct DirLight {
     vec3 direction;
 
-    vec3 specular;
     vec3 diffuse;
     vec3 ambient;
+    vec3 specular;
 };
 
 struct Material {

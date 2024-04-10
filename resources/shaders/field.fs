@@ -4,9 +4,9 @@ out vec4 FragColor;
 struct DirLight {
     vec3 direction;
 
-    vec3 specular;
     vec3 diffuse;
     vec3 ambient;
+    vec3 specular;
 };
 
 struct Material {
@@ -37,7 +37,6 @@ void main()
     float diff = max(dot(norm, lightDir), 0.0);
     vec3 diffuse = dirLight.diffuse * diff * texture(material.diffuse, TexCoords).rgb;
 
-    // specular
     // specular
     vec3 viewDir = normalize(viewPos - FragPos);
 //    vec3 reflectDir = reflect(-lightDir, norm);

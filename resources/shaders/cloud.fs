@@ -9,6 +9,6 @@ void main()
 {
     vec4 texColor = texture(texture1, TexCoords);
     if(texColor.a < 0.1)
-        discard;
+        discard; // fragment discarding
     FragColor = texColor;
 }
