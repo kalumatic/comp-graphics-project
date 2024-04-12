@@ -24,7 +24,6 @@ unsigned int loadCubemap(vector<std::string> faces);
 
 unsigned int loadTexture(char const *path);
 
-
 // settings
 const unsigned int SCR_WIDTH = 1920;
 const unsigned int SCR_HEIGHT = 1080;
@@ -78,7 +77,6 @@ int main() {
 //    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     // -----------------------------------------------------------------------------------------------------------
-
 
     // football field
     float fieldVertices[] = {
