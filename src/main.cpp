@@ -1,6 +1,3 @@
-// TODO
-// point shadows - just copy the code?
-
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
