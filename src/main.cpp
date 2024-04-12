@@ -1,11 +1,11 @@
 // TODO
-// pointlight for the football, position of the light
+// point shadows - just copy the code?
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
 #include <learnopengl/filesystem.h>
-#include <learnopengl/shader_m.h>
+#include <learnopengl/shader.h>
 #include <learnopengl/camera.h>
 #include <learnopengl/model.h>
 
@@ -24,9 +24,10 @@ unsigned int loadCubemap(vector<std::string> faces);
 
 unsigned int loadTexture(char const *path);
 
+
 // settings
-const unsigned int SCR_WIDTH = 1800;
-const unsigned int SCR_HEIGHT = 1100;
+const unsigned int SCR_WIDTH = 1920;
+const unsigned int SCR_HEIGHT = 1080;
 
 // camera
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
@@ -77,6 +78,7 @@ int main() {
 //    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     // -----------------------------------------------------------------------------------------------------------
+
 
     // football field
     float fieldVertices[] = {
@@ -263,7 +265,10 @@ int main() {
         glm::vec3 dirLightAmbient(0.05f, 0.05f, 0.05f);
         glm::vec3 dirLightDiffuse(0.2f, 0.2f, 0.2f);
         glm::vec3 dirLightSpecular(1.0f, 1.0f, 1.0f);
-
+        glm::vec3 pointLightPosition(10.0f, 5.0f, 0.0f);
+        glm::vec3 pointLightAmbient(0.3f, 0.3f, 0.3f);
+        glm::vec3 pointLightDiffuse(0.95f, 0.95f, 0.95f);
+        glm::vec3 pointLightSpecular(1.0f, 1.0f, 1.0f);
 
         // projection and view matrix stay the same
         projection = glm::perspective(glm::radians(camera.Zoom), (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f,
@@ -271,6 +276,8 @@ int main() {
         view = camera.GetViewMatrix();
 
         // field
+        glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         fieldShader.use();
         glBindVertexArray(fieldVAO);
 
@@ -285,17 +292,16 @@ int main() {
         fieldShader.setMat4("view", view);
         fieldShader.setMat4("projection", projection);
 
-
         fieldShader.setVec3("dirLight.direction", dirLightDirection.x, dirLightDirection.y, dirLightDirection.z);
 
         fieldShader.setVec3("dirLight.ambient", dirLightAmbient.x, dirLightAmbient.y, dirLightAmbient.z);
         fieldShader.setVec3("dirLight.diffuse", dirLightDiffuse.x, dirLightDiffuse.y, dirLightDiffuse.z);
         fieldShader.setVec3("dirLight.specular", dirLightSpecular.x, dirLightSpecular.y, dirLightSpecular.z);
 
-        fieldShader.setVec3("pointLight.position", 10.0f, 5.0f, 0.0f);
-        fieldShader.setVec3("pointLight.ambient", 0.3f, 0.3f, 0.3f);
-        fieldShader.setVec3("pointLight.diffuse", 0.95f, 0.95f, 0.95f);
-        fieldShader.setVec3("pointLight.specular", 1.0f, 1.0f, 1.0f);
+        fieldShader.setVec3("pointLight.position", pointLightPosition.x, pointLightPosition.y, pointLightPosition.z);
+        fieldShader.setVec3("pointLight.ambient", pointLightAmbient.x, pointLightAmbient.y, pointLightAmbient.z);
+        fieldShader.setVec3("pointLight.diffuse", pointLightDiffuse.x, pointLightDiffuse.y, pointLightDiffuse.z);
+        fieldShader.setVec3("pointLight.specular", pointLightSpecular.x, pointLightSpecular.y, pointLightSpecular.z);
         fieldShader.setFloat("pointLight.constant", 1.0f);
         fieldShader.setFloat("pointLight.linear", 0.027f);
         fieldShader.setFloat("pointLight.quadratic", 0.0028f);
@@ -336,7 +342,7 @@ int main() {
         model = glm::translate(model,
                                glm::vec3(10.0f, -5.0f, 0.0f)); // translate it down so it's at the center of the scene
         model = glm::scale(model, glm::vec3(0.2f));
-        model = glm::rotate(model, 80.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+        model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         lampShader.setMat4("model", model);
         lampShader.setMat4("view", view);
         lampShader.setMat4("projection", projection);
@@ -352,7 +358,6 @@ int main() {
         lampShader.setFloat("material.shininess", 256.0f);
 
         lampModel.Draw(lampShader);
-
 
         // football
         footballShader.use();
@@ -373,13 +378,13 @@ int main() {
         footballShader.setVec3("dirLight.diffuse", dirLightDiffuse.x, dirLightDiffuse.y, dirLightDiffuse.z);
         footballShader.setVec3("dirLight.specular", dirLightSpecular.x, dirLightSpecular.y, dirLightSpecular.z);
 
-        fieldShader.setVec3("pointLight.position", 10.0f, 5.0f, 0.0f);
-        fieldShader.setVec3("pointLight.ambient", 0.3f, 0.3f, 0.3f);
-        fieldShader.setVec3("pointLight.diffuse", 0.95f, 0.95f, 0.95f);
-        fieldShader.setVec3("pointLight.specular", 1.0f, 1.0f, 1.0f);
-        fieldShader.setFloat("pointLight.constant", 1.0f);
-        fieldShader.setFloat("pointLight.linear", 0.027f);
-        fieldShader.setFloat("pointLight.quadratic", 0.0028f);
+        footballShader.setVec3("pointLight.position", pointLightPosition.x, pointLightPosition.y, pointLightPosition.z);
+        footballShader.setVec3("pointLight.ambient", pointLightAmbient.x, pointLightAmbient.y, pointLightAmbient.z);
+        footballShader.setVec3("pointLight.diffuse", pointLightDiffuse.x, pointLightDiffuse.y, pointLightDiffuse.z);
+        footballShader.setVec3("pointLight.specular", pointLightSpecular.x, pointLightSpecular.y, pointLightSpecular.z);
+        footballShader.setFloat("pointLight.constant", 1.0f);
+        footballShader.setFloat("pointLight.linear", 0.027f);
+        footballShader.setFloat("pointLight.quadratic", 0.0028f);
 
         footballShader.setVec3("viewPos", camera.Position);
 
